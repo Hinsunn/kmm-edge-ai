@@ -50,7 +50,13 @@ kotlin {
             version = from("0.18.0"),
             products = listOf(product("LiteRTLM")),
         )
-        
+
+        // swiftPackage(
+        //     url = url("https://github.com/Tencent/MMKV.git"),
+        //     version = from(version = "2.4.3"),
+        //     products = listOf(product("MMKV"))
+        // )
+
     }
 
     sourceSets {

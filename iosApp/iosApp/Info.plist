@@ -4,5 +4,9 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>HFToken</key>
+	<string>$(HF_TOKEN)</string>
+	<key>UIFileSharingEnabled</key>
+	<true/>
 </dict>
 </plist>
