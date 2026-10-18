@@ -53,7 +53,7 @@ kotlin {
 
         // swiftPackage(
         //     url = url("https://github.com/Tencent/MMKV.git"),
-        //     version = from(version = "2.4.3"),
+        //     version = from(version = "2.4.1"),
         //     products = listOf(product("MMKV"))
         // )
 

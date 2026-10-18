@@ -10,6 +10,8 @@ import SwiftUI
 struct ChatComposer: View {
     let focused: FocusState<Bool>.Binding
     let text: Binding<String>
+    let isSending: Bool
+    let onPress: () -> Void
 
     var body: some View {
         VStack(spacing: 12) {
@@ -55,14 +57,19 @@ struct ChatComposer: View {
                 .accessibilityLabel("Start listening")
 
                 Button {
-                    print("Send")
+                    onPress()
                 } label: {
-                    Image(systemName: "paperplane.fill")
-                        .frame(width: 24, height: 24)
-                        .contentShape(Rectangle())
+                    if isSending {
+                        Image(systemName: "stop.circle.fill")
+                            .frame(width: 32, height: 32)
+                            .contentShape(Rectangle())
+                    } else {
+                        Image(systemName: "paperplane.fill")
+                            .frame(width: 24, height: 24)
+                            .contentShape(Rectangle())
+                    }
                 }
                 .buttonStyle(.plain)
-                .disabled(text.wrappedValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 .accessibilityLabel("Send message")
             }
             .font(.system(size: 18))

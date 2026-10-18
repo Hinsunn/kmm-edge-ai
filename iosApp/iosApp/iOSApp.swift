@@ -21,8 +21,13 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
 
 @main
 struct iOSApp: App {
+    @State private var store: SessionStore
+    @State private var mlEngine: LiteRTLMEngine
+
     init() {
         LLMProvider.shared.engine = SwiftLLMEngine()
+        _store = State(initialValue: SessionStore(context: AppDatabase.container.mainContext))
+        _mlEngine = State(initialValue: LiteRTLMEngine())
     }
 
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
@@ -30,6 +35,8 @@ struct iOSApp: App {
         WindowGroup {
             ContentView()
         }
+        .environment(store)
+        .environment(mlEngine)
         .modelContainer(AppDatabase.container)
     }
 }

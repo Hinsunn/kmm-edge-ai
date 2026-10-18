@@ -134,7 +134,6 @@ class LiteRTLMModelDownloadManager: NSObject {
     }
 
     private func seed() {
-        nsLog("Seeding LiteRTLMEntity models into database")
         let existing = Dictionary(allModels().map { ($0.downloadURL, $0) }, uniquingKeysWith: { a, _ in a })
         for model in LiteRTLMEntity.availableModels {
             if let row = existing[model.downloadURL] {

@@ -30,4 +30,19 @@ import SwiftData
     static var now: Int64 {
         Int64(Date().timeIntervalSince1970 * 1000)
     }
+
+    func addMessage(
+        _ message: String,
+        messageRole: MessageRole = .human,
+        in context: ModelContext
+    ) {
+        let message = MessageEntity(
+            message: message,
+            messageRole: messageRole,
+            session: self
+        )
+
+        context.insert(message)
+        self.updatedAt = SessionEntity.now
+    }
 }

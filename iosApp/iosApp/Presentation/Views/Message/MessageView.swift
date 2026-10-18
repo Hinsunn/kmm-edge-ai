@@ -22,62 +22,224 @@ let suggestionQuestions = [
 ]
 
 struct MessageView: View {
-    @Query(sort: \SessionEntity.createdAt) private var sessions: [SessionEntity]
-    @Environment(MainViewModel.self) private var mainViewModel
+    var sessionId: UUID?
+    @State var currentSession: SessionEntity?
 
-    @State private var message: String = ""
+    @Environment(LiteRTLMEngine.self) private var mlEngine
+    @Environment(NavigationManager.self) private var navigationManager
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
+
     @FocusState private var isTextFieldFocused: Bool
 
+    @State private var text: String = ""
     @State private var isRefreshing: Bool = false
     @State private var suggestions: [String] = Array(suggestionQuestions.shuffled().prefix(3))
 
-    private var hasMessage: Bool = false
+    @State private var isLoadingMessage: Bool = false
+    @State private var messages: [MessageEntity] = []
+
+    @State private var streamingText: String = ""
+    @State private var isStreaming = false
+    @State private var streamTask: Task<Void, Never>?
+
+    private var hasMessage: Bool {
+        !messages.isEmpty
+    }
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                Group {
+        ZStack {
+            Group {
+                if isLoadingMessage {
+                    MessagesSkeleton()
+                } else {
                     if self.hasMessage {
-                        ChatMessages()
+                        ChatMessages(
+                            messages: messages,
+                            isStreaming: isStreaming,
+                            streamingText: streamingText
+                        )
                     } else {
                         MessageWelcoming(
                             suggestions: suggestions,
                             isRefreshing: isRefreshing,
                             onTapSuggestion: { suggestion in
-                                self.message = suggestion
-                                self.isTextFieldFocused = true
+                                self.text = suggestion
+                                // uncomment to focus when suggestion tapped
+                                // self.isTextFieldFocused = true
                             },
                             onRefresh: { self.refreshSuggestion() }
                         )
                     }
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                ChatComposer(
-                    focused: $isTextFieldFocused,
-                    text: $message
-                )
-            }
-            .background(Color(uiColor: .systemBackground))
-            .contentShape(Rectangle())
-            .onTapGesture {
-                self.isTextFieldFocused = false
-            }
-            .navigationTitle("Messages")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button(action: {
-                        print("Icon action tapped!")
-                    }) {
-                        Image(systemName: "app.badge.fill")
-                    }
-                    .foregroundColor(.gray)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            ChatComposer(
+                focused: $isTextFieldFocused,
+                text: $text,
+                isSending: isStreaming
+            ) {
+                if !isStreaming {
+                    sendMessage(message: text)
+                } else {
+                    cancelStreaming()
                 }
             }
-            .task {
-                // Listen to the active session changes and update the message accordingly
+        }
+        .background(Color(uiColor: .systemBackground))
+        .contentShape(Rectangle())
+        .onTapGesture {
+            self.isTextFieldFocused = false
+        }
+        .navigationTitle("Messages")
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 16, weight: .medium))
+                }
+                .tint(.primary)
+            }
+        }
+        .toolbar(.hidden, for: .tabBar)
+        .task { initialize() }
+        .onDisappear { streamTask?.cancel() }
+    }
+
+    private func sendMessage(message: String) {
+        let trimmed = message.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, !isStreaming else { return }
+
+        guard mlEngine.isReady else {
+            nsLog(message: "ML Engine is not ready. Please wait for initialization.")
+            return
+        }
+
+        // Insert human message into modelContext
+        var isInsertedHumanMessage = false
+        do {
+            // This case only run when the user send message for the first time and currentSession is nil
+            if currentSession == nil {
+                let newSession = SessionEntity(title: message)
+                modelContext.insert(newSession)
+                try modelContext.save()
+                currentSession = newSession
+            }
+
+            let humanMessage = MessageEntity(
+                message: message,
+                messageRole: .human,
+                session: currentSession!
+            )
+            modelContext.insert(humanMessage)
+            try modelContext.save()
+
+            // Append to messages array to update UI
+            messages.append(humanMessage)
+            isInsertedHumanMessage = true
+        } catch {
+            nsLog(message: "Failed to save human message due to error: \(error)")
+        }
+
+        guard isInsertedHumanMessage else {
+            nsLog(message: "Human message was not inserted into modelContext. Aborting sendMessage.")
+            return
+        }
+
+        text = ""
+        streamingText = ""
+        isStreaming = true
+
+        streamTask = Task { @MainActor in
+            do {
+                for try await chunk in mlEngine.streamMessage(trimmed) {
+                    streamingText += chunk
+                }
+            } catch is CancellationError {
+                nsLog(message: "Streaming was cancelled.")
+            } catch {
+                nsLog(message: "Stream failed: \(error)")
+            }
+
+            let aiMessage = MessageEntity(
+                message: streamingText.trimmingCharacters(in: .whitespacesAndNewlines),
+                messageRole: .ai,
+                session: currentSession!
+            )
+
+            do {
+                modelContext.insert(aiMessage)
+                try modelContext.save()
+                messages.append(aiMessage)
+            } catch {
+                nsLog(message: "Failed to save AI message due to error: \(error)")
+            }
+
+            isStreaming = false
+            streamingText = ""
+        }
+    }
+
+    private func cancelStreaming() {
+        // cancel the streaming task if it exists and save the current streaming text as an AI message
+        streamTask?.cancel()
+        if !streamingText.isEmpty {
+            let aiMessage = MessageEntity(
+                message: streamingText.trimmingCharacters(in: .whitespacesAndNewlines),
+                messageRole: .ai,
+                session: currentSession!
+            )
+
+            do {
+                modelContext.insert(aiMessage)
+                try modelContext.save()
+                messages.append(aiMessage)
+            } catch {
+                nsLog(message: "Failed to save AI message due to error: \(error)")
+            }
+        }
+
+        isStreaming = false
+        streamingText = ""
+    }
+
+    @MainActor
+    private func initialize() {
+        // Guard not loading and session id is not nil
+        guard !isLoadingMessage, let sessionId = sessionId else { return }
+
+        isLoadingMessage = true
+        Task { @MainActor in
+            do {
+                isLoadingMessage = false
+                let predicate = #Predicate<SessionEntity> { session in
+                    session.id == sessionId
+                }
+                var descriptor = FetchDescriptor<SessionEntity>(predicate: predicate)
+                descriptor.fetchLimit = 1
+
+                let matchingSessions = try modelContext.fetch(descriptor)
+                if matchingSessions.isEmpty {
+                    nsLog(message: "No session found with ID: \(sessionId). Creating a new session.")
+                    return
+                }
+
+                let session = matchingSessions[0]
+
+                self.currentSession = session
+                self.messages = session.messages.sorted { $0.createdAt < $1.createdAt }
+
+                isLoadingMessage = false
+                nsLog(message: "Loaded \(self.messages.count) messages for session ID: \(sessionId).")
+            } catch {
+                isLoadingMessage = false
+                nsLog(message: "Failed to load messages for session ID: \(sessionId) due to error: \(error).")
             }
         }
     }
@@ -106,5 +268,10 @@ struct MessageView: View {
                 isRefreshing = false
             }
         }
+    }
+
+    private func nsLog(message: String) {
+        let now = Date().formatted(date: .omitted, time: .standard)
+        NSLog("[LITERTLM_ENGINE | \(now)]: %@", message)
     }
 }

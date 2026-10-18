@@ -10,31 +10,44 @@ import SwiftUI
 
 struct SessionView: View {
     @Environment(\.modelContext) private var context
+    @Environment(NavigationManager.self) private var navigationManager
+
     @Query(sort: \SessionEntity.createdAt) private var sessions: [SessionEntity]
 
-    @Environment(MainViewModel.self) private var mainViewModel
+    @Environment(SessionStore.self) private var sessionStore
 
     var body: some View {
-        NavigationStack {
-            VStack(alignment: .leading) {
-                List(sessions) { session in
-                    HStack {
-                        Text(session.title)
-                        Spacer()
-                        Button {
-                            withAnimation {
-                                deleteSession(session)
-                            }
-                        } label: {
-                            Image(systemName: "trash")
-                                .foregroundColor(.red)
+        VStack(alignment: .leading) {
+            List(sessions) { session in
+                HStack {
+                    Text(session.title)
+                    Spacer()
+                    Button {
+                        withAnimation {
+                            deleteSession(session)
                         }
-                        .buttonStyle(.plain)
+                    } label: {
+                        Image(systemName: "trash")
+                            .foregroundColor(.red)
                     }
-                    .onTapGesture { mainViewModel.setActiveSessionId(session.id) }
+                    .buttonStyle(.plain)
+                }
+                .onTapGesture {
+                    navigationManager.navigate(to: .message(sessionId: session.id))
                 }
             }
-            .navigationTitle("Sessions")
+        }
+        .navigationTitle("Sessions")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(action: {
+                    // Navigate to the message view with a nil sessionId to create a new session
+                    navigationManager.navigate(to: .message(sessionId: nil))
+                }) {
+                    Image(systemName: "plus.rectangle.fill")
+                }
+                .foregroundColor(.gray)
+            }
         }
         .task { initialize() }
     }

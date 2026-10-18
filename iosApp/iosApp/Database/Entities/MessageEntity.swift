@@ -18,7 +18,7 @@ enum MessageRole: String, Codable {
     var message: String
     var messageRole: MessageRole
 
-    var session: SessionEntity?
+    var session: SessionEntity
 
     var usageCredits: Int
     var usageTokens: Int
@@ -26,10 +26,12 @@ enum MessageRole: String, Codable {
     var createdAt: Int64
     var updatedAt: Int64
 
-    init(message: String, messageRole: MessageRole) {
+    init(message: String, messageRole: MessageRole, session: SessionEntity) {
         self.id = .init()
         self.message = message
         self.messageRole = messageRole
+
+        self.session = session
 
         self.usageCredits = 0
         self.usageTokens = 0

@@ -14,71 +14,69 @@ struct DownloadView: View {
     private let manager = LiteRTLMModelDownloadManager.shared
 
     var body: some View {
-        NavigationStack {
-            List(models) { model in
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(model.name)
-                                .font(.subheadline)
-                                .lineLimit(1)
+        List(models) { model in
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(model.name)
+                            .font(.subheadline)
+                            .lineLimit(1)
 
-                            Spacer().frame(height: 2)
-                            sizeText(model).font(.caption.monospacedDigit()).foregroundStyle(.secondary)
-                        }
-                        Spacer()
-
-                        if model.downloadStatus != .idle && model.downloadStatus != .completed {
-                            Text(model.downloadProgress * 100, format: .number.precision(.fractionLength(2)))
-                                .font(.system(size: 14))
-                                .foregroundStyle(.secondary)
-                        }
-
-                        HStack {
-                            switch model.downloadStatus {
-                            case .idle:
-                                Button("Download", systemImage: "arrow.down.circle") {
-                                    manager.download(model)
-                                }
-                                .font(.title3)
-                            case .enqueued, .downloading:
-                                Button("Pause", systemImage: "pause.circle") {
-                                    manager.pause(model)
-                                }
-                                .font(.title3)
-                            case .paused, .failed:
-                                Button("Resume", systemImage: "play.circle") {
-                                    manager.resume(model)
-                                }
-                                .font(.title3)
-                            case .completed:
-                                Button("Remove", systemImage: "trash", role: .destructive) {
-                                    manager.remove(model)
-                                }
-                                .font(.system(size: 18, weight: .regular, design: .default))
-                            }
-                        }
-                        .buttonStyle(.borderless)
-                        .labelStyle(.iconOnly)
+                        Spacer().frame(height: 2)
+                        sizeText(model).font(.caption.monospacedDigit()).foregroundStyle(.secondary)
                     }
+                    Spacer()
 
                     if model.downloadStatus != .idle && model.downloadStatus != .completed {
-                        Spacer().frame(height: 2)
-                        LinearProgressBar(progress: model.downloadProgress)
-                        Spacer().frame(height: 2)
+                        Text(model.downloadProgress * 100, format: .number.precision(.fractionLength(2)))
+                            .font(.system(size: 14))
+                            .foregroundStyle(.secondary)
                     }
 
-                    Text(model.summary)
-                        .font(.system(size: 14))
-                        .foregroundStyle(.secondary)
-
-                    if let error = model.errorMessage {
-                        Text(error).font(.caption).foregroundStyle(.red)
+                    HStack {
+                        switch model.downloadStatus {
+                        case .idle:
+                            Button("Download", systemImage: "arrow.down.circle") {
+                                manager.download(model)
+                            }
+                            .font(.title3)
+                        case .enqueued, .downloading:
+                            Button("Pause", systemImage: "pause.circle") {
+                                manager.pause(model)
+                            }
+                            .font(.title3)
+                        case .paused, .failed:
+                            Button("Resume", systemImage: "play.circle") {
+                                manager.resume(model)
+                            }
+                            .font(.title3)
+                        case .completed:
+                            Button("Remove", systemImage: "trash", role: .destructive) {
+                                manager.remove(model)
+                            }
+                            .font(.system(size: 18, weight: .regular, design: .default))
+                        }
                     }
+                    .buttonStyle(.borderless)
+                    .labelStyle(.iconOnly)
+                }
+
+                if model.downloadStatus != .idle && model.downloadStatus != .completed {
+                    Spacer().frame(height: 2)
+                    LinearProgressBar(progress: model.downloadProgress)
+                    Spacer().frame(height: 2)
+                }
+
+                Text(model.summary)
+                    .font(.system(size: 14))
+                    .foregroundStyle(.secondary)
+
+                if let error = model.errorMessage {
+                    Text(error).font(.caption).foregroundStyle(.red)
                 }
             }
-            .navigationTitle("LiteRTLM Models")
         }
+        .navigationTitle("LiteRTLM Models")
         .task { initialize() }
     }
 
