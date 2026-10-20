@@ -57,6 +57,12 @@ enum DownloadStatus: String, Codable {
 extension LiteRTLMEntity {
     static var availableModels: [LiteRTLMEntity] = [
         .init(
+            name: "Gemma 4 E2B IT",
+            summary: "A compact instruction-tuned model, built for clear and well-formatted answers. It is strong at summarizing, rewriting and answering everyday questions while staying small enough for fast replies. A balanced choice between quality and speed.",
+            modelPath: "gemma-4-E2B-it.litertlm",
+            downloadURL: "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm"
+        ),
+        .init(
             name: "Qwen3 0.6B",
             summary: "The smallest and fastest model here, so it answers almost instantly and runs well even on older iPhones. It supports both a quick-reply mode and a step-by-step thinking mode, and handles many languages. A good default for everyday chat and short tasks.",
             modelPath: "Qwen3-0.6B_dynamic_wi4b32_afp32.litertlm",

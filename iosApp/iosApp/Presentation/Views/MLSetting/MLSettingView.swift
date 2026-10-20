@@ -197,7 +197,6 @@ struct ModelSelectionSheet: View {
                     }
                 }
             }
-            .navigationTitle("Select Model")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {

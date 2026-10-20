@@ -34,6 +34,7 @@ struct iOSApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .task { DeviceSystem.trace() }
         }
         .environment(store)
         .environment(mlEngine)

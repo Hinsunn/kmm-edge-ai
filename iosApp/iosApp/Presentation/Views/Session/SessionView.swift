@@ -11,10 +11,9 @@ import SwiftUI
 struct SessionView: View {
     @Environment(\.modelContext) private var context
     @Environment(NavigationManager.self) private var navigationManager
+    @Environment(SessionStore.self) private var sessionStore
 
     @Query(sort: \SessionEntity.createdAt) private var sessions: [SessionEntity]
-
-    @Environment(SessionStore.self) private var sessionStore
 
     var body: some View {
         VStack(alignment: .leading) {

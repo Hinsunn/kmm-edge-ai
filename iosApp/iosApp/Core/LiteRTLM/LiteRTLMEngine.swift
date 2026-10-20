@@ -94,7 +94,20 @@ final class LiteRTLMEngine {
                     }
 
                     if conversation == nil {
-                        conversation = try await engine.createConversation()
+                        conversation = try await engine.createConversation(
+                            with: ConversationConfig(
+                                tools: [WebSearchTool()],
+                                thinkingConfig: ThinkingConfig(
+                                    enableThinking: true,
+                                    thinkingTokenBudget: 1024
+                                )
+                            )
+                        )
+
+//                        if let thought = response.channels["thought"] {
+//                          print("Thought: \(thought)")
+//                        }
+//                        print("Answer: \(response.toString)")
                     }
 
                     for try await chunk in conversation!.sendMessageStream(Message(message)) {
