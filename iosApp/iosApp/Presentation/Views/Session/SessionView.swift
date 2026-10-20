@@ -11,7 +11,6 @@ import SwiftUI
 struct SessionView: View {
     @Environment(\.modelContext) private var context
     @Environment(NavigationManager.self) private var navigationManager
-    @Environment(GlobalEventDriven.self) private var globalEventDriven
 
     @Query(sort: \SessionEntity.createdAt) private var sessions: [SessionEntity]
 

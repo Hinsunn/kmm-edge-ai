@@ -31,17 +31,6 @@ extension View {
     func shimmering() -> some View {
         modifier(ShimmeringModifier())
     }
-
-    func onEvent<E: BusEvent>(
-        _ type: E.Type,
-        perform handler: @escaping @MainActor (E) -> Void
-    ) -> some View {
-        task {
-            for await event in EventBus.shared.events(of: type) {
-                handler(event)
-            }
-        }
-    }
 }
 
 public struct ShimmeringModifier: ViewModifier {

@@ -5,6 +5,7 @@
 //
 
 import Foundation
+import SwiftUI
 
 protocol BusEvent: Sendable {
     static var replay: Int { get }
@@ -97,5 +98,18 @@ final class EventBus: @unchecked Sendable {
         _ handler: @escaping @MainActor (E) -> Void
     ) -> Task<Void, Never> {
         shared.subscribeOnMain(type, handler)
+    }
+}
+
+extension View {
+    func onEvent<E: BusEvent>(
+        _ type: E.Type,
+        perform handler: @escaping @MainActor (E) -> Void
+    ) -> some View {
+        task {
+            for await event in EventBus.shared.events(of: type) {
+                handler(event)
+            }
+        }
     }
 }
