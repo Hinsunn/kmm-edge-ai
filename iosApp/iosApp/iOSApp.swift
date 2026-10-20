@@ -21,13 +21,13 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
 
 @main
 struct iOSApp: App {
-    @State private var store: SessionStore
     @State private var mlEngine: LiteRTLMEngine
+    @State private var globalEventDriven: GlobalEventDriven
 
     init() {
         LLMProvider.shared.engine = SwiftLLMEngine()
-        _store = State(initialValue: SessionStore(context: AppDatabase.container.mainContext))
         _mlEngine = State(initialValue: LiteRTLMEngine())
+        _globalEventDriven = State(initialValue: GlobalEventDriven(modelContext: AppDatabase.container.mainContext))
     }
 
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
@@ -36,7 +36,7 @@ struct iOSApp: App {
             ContentView()
                 .task { DeviceSystem.trace() }
         }
-        .environment(store)
+        .environment(globalEventDriven)
         .environment(mlEngine)
         .modelContainer(AppDatabase.container)
     }

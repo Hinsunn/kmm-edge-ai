@@ -284,7 +284,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
-				DEVELOPMENT_TEAM = "${TEAM_ID}";
+				DEVELOPMENT_TEAM = 87V789PV7X;
 				ENABLE_PREVIEWS = YES;
 				FirecrawkApiKey = "fc-e6219f1048e54e5088b499e6c336470c";
 				GENERATE_INFOPLIST_FILE = YES;

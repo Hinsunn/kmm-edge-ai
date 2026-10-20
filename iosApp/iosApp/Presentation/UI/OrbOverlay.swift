@@ -82,8 +82,8 @@ struct OrbOverlay: View {
 private struct OrbRipples: View {
     var startRadius: CGFloat
     var tint: Color = .init(hue: 0.60, saturation: 0.85, brightness: 1.0)
-    var lifetime: Double = 2.8   // seconds a single ring lives
-    var interval: Double = 0.8   // seconds between rings
+    var lifetime: Double = 2.8
+    var interval: Double = 0.9
 
     @State private var start = Date()
 
@@ -115,14 +115,14 @@ private struct OrbRipples: View {
     private func ringStates(at t: Double, maxRadius: CGFloat) -> [(radius: CGFloat, alpha: Double, width: CGFloat)] {
         guard t > 0 else { return [] }
         let newest = Int(t / interval)
-        return (0...newest).reversed().compactMap { i in
+        return (0 ... newest).reversed().compactMap { i in
             let p = (t - Double(i) * interval) / lifetime
             guard p >= 0, p < 1 else { return nil }
-            let eased = 1 - pow(1 - p, 3)                  // ease-out cubic: fast at the orb, slows far away
-            let fadeIn = min(p / 0.08, 1)                  // emerge from the orb edge instead of popping
+            let eased = 1 - pow(1 - p, 3) // ease-out cubic: fast at the orb, slows far away
+            let fadeIn = min(p / 0.08, 1) // emerge from the orb edge instead of popping
             let alpha = fadeIn * pow(1 - p, 1.8)
             let radius = startRadius + (maxRadius - startRadius) * eased
-            let width = 5 - 3.8 * CGFloat(eased)           // thins out as it spreads
+            let width = 5 - 3.8 * CGFloat(eased) // thins out as it spreads
             return (radius, alpha, width)
         }
     }

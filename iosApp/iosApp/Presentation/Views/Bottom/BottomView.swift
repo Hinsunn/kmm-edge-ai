@@ -58,6 +58,14 @@ struct BottomView: View {
                 OrbOverlay { showOrb = false }
             }
         }
+        .onEvent(DatabaseGlobalEvent.self) { event in
+            switch event {
+            case .messageCleanup:
+                print("Message cleanup event received")
+            case .sessionCleanup:
+                print("Session cleanup event received")
+            }
+        }
     }
 
     @ViewBuilder

@@ -11,7 +11,7 @@ import SwiftUI
 struct SessionView: View {
     @Environment(\.modelContext) private var context
     @Environment(NavigationManager.self) private var navigationManager
-    @Environment(SessionStore.self) private var sessionStore
+    @Environment(GlobalEventDriven.self) private var globalEventDriven
 
     @Query(sort: \SessionEntity.createdAt) private var sessions: [SessionEntity]
 
@@ -59,6 +59,9 @@ struct SessionView: View {
     }
 
     private func initialize() {
+        EventBus.shared.emit(DatabaseGlobalEvent.messageCleanup)
+        EventBus.shared.emit(AuthGlobalEvent.requiredAuthentication)
+
         guard sessions.isEmpty else { return }
 
         runGuard {
