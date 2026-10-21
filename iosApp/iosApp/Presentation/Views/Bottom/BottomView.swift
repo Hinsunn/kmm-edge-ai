@@ -25,6 +25,11 @@ struct BottomView: View {
 
         TabView {
             NavigationStack(path: $nav.path) {
+                AudioWaveformView()
+            }
+            .tabItem { Label("Waveform", systemImage: "airplay.audio") }
+
+            NavigationStack(path: $nav.path) {
                 SessionView()
                     .navigationDestination(for: NavRoute.self) { route in
                         destination(for: route)
@@ -58,6 +63,8 @@ struct BottomView: View {
                 OrbOverlay { showOrb = false }
             }
         }
+        // Parse the orb animation in the background so tapping the mascot opens it instantly.
+        .task { await EnergyOrbV4.preload() }
         .onEvent(DatabaseGlobalEvent.self) { event in
             switch event {
             case .messageCleanup:

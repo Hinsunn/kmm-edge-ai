@@ -29,7 +29,7 @@ struct OrbOverlay: View {
                 .opacity(orbOpacity)
                 .allowsHitTesting(false)
 
-            EnergyOrbMetal()
+            EnergyOrbV4()
                 .frame(width: orbSize, height: orbSize)
                 .scaleEffect(orbScale * breath)
                 .opacity(orbOpacity)
@@ -81,7 +81,7 @@ struct OrbOverlay: View {
 
 private struct OrbRipples: View {
     var startRadius: CGFloat
-    var tint: Color = .init(hue: 0.60, saturation: 0.85, brightness: 1.0)
+    var tint: Color = .init(red: 0.80, green: 0.82, blue: 0.86) // silver
     var lifetime: Double = 2.8
     var interval: Double = 0.9
 
@@ -95,18 +95,15 @@ private struct OrbRipples: View {
                 let maxRadius = hypot(size.width, size.height) * 0.5
                 let rings = ringStates(at: t, maxRadius: maxRadius)
 
-                // Soft halo for all rings in one blurred layer, then a crisp core on top.
-                ctx.drawLayer { glow in
-                    glow.addFilter(.blur(radius: 14))
-                    glow.blendMode = .plusLighter
-                    for r in rings {
-                        glow.stroke(circle(c, r.radius), with: .color(tint.opacity(r.alpha * 0.9)), lineWidth: r.width * 4)
-                    }
-                }
+                // Fake glow with wide, faint strokes instead of a full-screen blur
+                // layer (an offscreen blur pass per frame is too heavy on older iPhones).
                 ctx.blendMode = .plusLighter
                 for r in rings {
-                    ctx.stroke(circle(c, r.radius), with: .color(tint.opacity(r.alpha)), lineWidth: r.width)
-                    ctx.stroke(circle(c, r.radius), with: .color(.white.opacity(r.alpha * 0.5)), lineWidth: r.width * 0.35)
+                    let path = circle(c, r.radius)
+                    ctx.stroke(path, with: .color(tint.opacity(r.alpha * 0.10)), lineWidth: r.width * 7)
+                    ctx.stroke(path, with: .color(tint.opacity(r.alpha * 0.20)), lineWidth: r.width * 3.5)
+                    ctx.stroke(path, with: .color(tint.opacity(r.alpha)), lineWidth: r.width)
+                    ctx.stroke(path, with: .color(.white.opacity(r.alpha * 0.5)), lineWidth: r.width * 0.35)
                 }
             }
         }

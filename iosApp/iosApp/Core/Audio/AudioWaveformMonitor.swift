@@ -21,22 +21,48 @@ final class AudioWaveformMonitor {
     static let shared = AudioWaveformMonitor()
     private init() {}
 
-    private var isMonitoring = false
+    var isMonitoring = false
     private let audioEngine = AVAudioEngine()
 
     private let bufferSize = 8192
     private var fftSetup: OpaquePointer?
 
-    private var fftMagnitudes = [Float](repeating: 0, count: sampleAmount)
-    private var downsampledMagnitudes: [Float] {
+    var fftMagnitudes = [Float](repeating: 0, count: sampleAmount)
+    var downsampledMagnitudes: [Float] {
         fftMagnitudes.lazy.enumerated().compactMap { idx, val in
             idx.isMultiple(of: downsampleFactor) ? val : nil
         }
     }
 
     func startMonitoring() async {
+        // Check permissions for microphone access
+        let granted = await AVAudioApplication.requestRecordPermission()
+        guard granted else {
+            print("Microphone access denied")
+            return
+        }
+
+        // The input node has no valid format (0 Hz / 0 channels) until a recording
+        // session is active, and installTap throws an ObjC exception on that format.
+        // Configured off the main thread: these calls block and Apple warns about UI stalls.
+        do {
+            try await Task.detached(priority: .userInitiated) {
+                let session = AVAudioSession.sharedInstance()
+                try session.setCategory(.playAndRecord, mode: .measurement, options: [.defaultToSpeaker, .mixWithOthers])
+                try session.setActive(true)
+            }.value
+        } catch {
+            print("Error configuring audio session: \(error.localizedDescription)")
+            return
+        }
+
         let inputNode = audioEngine.inputNode
-        let inputFormat = inputNode.inputFormat(forBus: 0)
+        let inputFormat = inputNode.outputFormat(forBus: 0)
+        guard inputFormat.sampleRate > 0, inputFormat.channelCount > 0 else {
+            // e.g. Simulator with no microphone available to the Mac.
+            print("No audio input available (format: \(inputFormat))")
+            return
+        }
         fftSetup = vDSP_DFT_zop_CreateSetup(nil, UInt(bufferSize), .FORWARD)
 
         // Listen to microphone input
@@ -98,7 +124,10 @@ final class AudioWaveformMonitor {
         }
 
         // 1. Copy of the audio samples as float
-        var realIn = buffers
+        // The tap may deliver fewer (or more) frames than requested; the DFT reads exactly
+        // bufferSize samples, so pad/trim to avoid reading past the array.
+        var realIn = Array(buffers.prefix(bufferSize))
+        realIn += [Float](repeating: 0, count: bufferSize - realIn.count)
         // 2. The imaginary part
         var imagIn = [Float](repeating: 0, count: bufferSize)
 

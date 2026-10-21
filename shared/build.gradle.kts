@@ -51,11 +51,11 @@ kotlin {
             products = listOf(product("LiteRTLM")),
         )
 
-        // swiftPackage(
-        //     url = url("https://github.com/Tencent/MMKV.git"),
-        //     version = from(version = "2.4.1"),
-        //     products = listOf(product("MMKV"))
-        // )
+        swiftPackage(
+            url = url("https://github.com/LottieFiles/dotlottie-ios.git"),
+            version = from("0.16.8"),
+            products = listOf(product("DotLottie"))
+        )
 
     }
 
