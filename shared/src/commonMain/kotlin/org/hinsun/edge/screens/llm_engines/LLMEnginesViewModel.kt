@@ -6,5 +6,4 @@ package org.hinsun.edge.screens.llm_engines
 // Date        : 10/10/26
 //
 
-class LLMEnginesViewModel {
-}
+class LLMEnginesViewModel {}

@@ -28,12 +28,13 @@ kotlin {
         compilerOptions {
             jvmTarget = JvmTarget.JVM_11
         }
+
         androidResources {
             enable = true
         }
-        withHostTest {
-            isIncludeAndroidResources = true
-        }
+
+        withHostTest { isIncludeAndroidResources = true }
+
         withDeviceTestBuilder {
             sourceSetTreeName = "test"
         }.configure {
@@ -66,7 +67,11 @@ kotlin {
 
             // LiteRT Android
             implementation(libs.litert)
+            implementation(libs.litert.gpu)
             implementation(libs.litert.android)
+
+            // Lottie Android
+            implementation(libs.lottie.android)
         }
 
         commonMain.dependencies {
@@ -83,6 +88,9 @@ kotlin {
             implementation(libs.jetbrains.navigation3.ui)
             implementation(libs.jetbrains.material3.adaptiveNavigation3)
             implementation(libs.jetbrains.lifecycle.viewmodelNavigation3)
+
+            // Tencent MMKV
+            implementation(libs.mmkv)
         }
 
         commonTest.dependencies {

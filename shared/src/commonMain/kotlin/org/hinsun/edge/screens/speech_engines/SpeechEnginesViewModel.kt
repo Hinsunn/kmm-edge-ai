@@ -5,6 +5,4 @@ package org.hinsun.edge.screens.speech_engines
 // Author      : Tran Van Hoai
 // Date        : 10/10/26
 //
-
-class SpeechEnginesViewModel {
-}
+class SpeechEnginesViewModel {}

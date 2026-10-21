@@ -13,7 +13,9 @@ struct ComposeView: UIViewControllerRepresentable {
         MainViewControllerKt.MainViewController()
     }
 
-    func updateUIViewController(_ uiViewController: UIViewController, context: Self.Context) {}
+    func updateUIViewController(_ uiViewController: UIViewController, context: Self.Context) {
+
+    }
 }
 
 struct BottomView: View {
