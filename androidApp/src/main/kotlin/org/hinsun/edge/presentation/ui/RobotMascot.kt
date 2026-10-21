@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlin.math.sin
 import kotlin.random.Random
+import kotlin.time.Duration.Companion.milliseconds
 
 private val eyeColor = Color(0.80f, 0.97f, 0.86f)
 private val glowColor = Color(0.45f, 0.72f, 1.0f)
@@ -67,13 +68,13 @@ fun RobotMascot(
     }
     LaunchedEffect(Unit) {
         while (true) {
-            delay(Random.nextLong(1_800, 5_000))
+            delay(Random.nextLong(1_800, 5_000).milliseconds)
             val times = if (Random.nextInt(10) < 3) 2 else 1 // 30% double blink
             repeat(times) { i ->
                 eyeScale.animateTo(0.08f, tween(70, easing = EaseIn))
-                delay(20)
+                delay(20.milliseconds)
                 eyeScale.animateTo(1f, tween(100, easing = EaseOut))
-                if (i < times - 1) delay(140)
+                if (i < times - 1) delay(140.milliseconds)
             }
         }
     }
@@ -91,7 +92,10 @@ fun RobotMascot(
         val glowSize = Size(w * 0.46f * glowScale, w * 0.07f * glowScale)
         drawOval(
             color = glowColor.copy(alpha = 0.14f + 0.04f * s),
-            topLeft = Offset(center.x - glowSize.width / 2, center.y + w * 0.46f - glowSize.height / 2),
+            topLeft = Offset(
+                center.x - glowSize.width / 2,
+                center.y + w * 0.46f - glowSize.height / 2
+            ),
             size = glowSize,
         )
 
@@ -116,9 +120,22 @@ private fun DrawScope.drawRobot(w: Float, eyeScale: Float) {
     drawIntoCanvas { canvas ->
         val paint = Paint().apply {
             color = Color.White
-            asFrameworkPaint().setShadowLayer(w * 0.10f, 0f, w * 0.05f, glowColor.copy(alpha = 0.25f).toArgb())
+            asFrameworkPaint().setShadowLayer(
+                w * 0.10f,
+                0f,
+                w * 0.05f,
+                glowColor.copy(alpha = 0.25f).toArgb()
+            )
         }
-        canvas.drawRoundRect(head.left, head.top, head.right, head.bottom, w * 0.32f, w * 0.32f, paint)
+        canvas.drawRoundRect(
+            head.left,
+            head.top,
+            head.right,
+            head.bottom,
+            w * 0.32f,
+            w * 0.32f,
+            paint
+        )
     }
     drawPanel(head, w * 0.32f, w * 0.012f)
 
@@ -126,7 +143,11 @@ private fun DrawScope.drawRobot(w: Float, eyeScale: Float) {
     val visor = rectAt(0f, w * 0.02f, w * 0.70f, w * 0.50f)
     val visorRadius = CornerRadius(w * 0.25f)
     drawRoundRect(
-        brush = Brush.verticalGradient(listOf(Color(0xFF2B2B2B), Color(0xFF0D0D0D)), visor.top, visor.bottom),
+        brush = Brush.verticalGradient(
+            listOf(Color(0xFF2B2B2B), Color(0xFF0D0D0D)),
+            visor.top,
+            visor.bottom
+        ),
         topLeft = visor.topLeft,
         size = visor.size,
         cornerRadius = visorRadius,
@@ -163,11 +184,23 @@ private fun DrawScope.drawPanel(rect: Rect, radius: Float, border: Float) {
         size = rect.size,
         cornerRadius = CornerRadius(radius),
     )
-    drawInsetStroke(rect, CornerRadius(radius), Brush.linearGradient(listOf(outlineColor, outlineColor)), border, 0.8f)
+    drawInsetStroke(
+        rect,
+        CornerRadius(radius),
+        Brush.linearGradient(listOf(outlineColor, outlineColor)),
+        border,
+        0.8f
+    )
 }
 
 /** SwiftUI `strokeBorder`: the stroke sits fully inside the shape. */
-private fun DrawScope.drawInsetStroke(rect: Rect, radius: CornerRadius, brush: Brush, width: Float, alpha: Float = 1f) {
+private fun DrawScope.drawInsetStroke(
+    rect: Rect,
+    radius: CornerRadius,
+    brush: Brush,
+    width: Float,
+    alpha: Float = 1f
+) {
     val inset = width / 2
     drawRoundRect(
         brush = brush,

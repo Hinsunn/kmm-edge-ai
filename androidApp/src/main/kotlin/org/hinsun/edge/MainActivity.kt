@@ -36,10 +36,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Preview(
-    showBackground = true,
-    showSystemUi = true,
-)
+@Preview(showBackground = true)
 @Composable
 fun AppAndroidPreview() {
     val navBackStack = rememberNavBackStack(

@@ -46,6 +46,7 @@ import kotlin.math.PI
 import kotlin.math.hypot
 import kotlin.math.min
 import kotlin.math.pow
+import kotlin.time.Duration.Companion.milliseconds
 
 /** SwiftUI `.spring(response:dampingFraction:)` expressed as a Compose spring. */
 internal fun <T> swiftSpring(response: Float, damping: Float) =
@@ -88,20 +89,23 @@ fun OrbOverlay(
 
         // 2. Scale and Opacity Orb
         launch {
-            delay(150)
+            delay(150.milliseconds)
             launch { orbScale.animateTo(1f, swiftSpring(0.5f, 0.75f)) }
             orbOpacity.animateTo(1f, swiftSpring(0.5f, 0.75f))
         }
 
         // 3. Breathing: ease 1.0 -> 0.9, then loop 0.9 <-> 1.1
         launch {
-            delay(650)
+            delay(650.milliseconds)
             breath.animateTo(0.9f, tween(800, easing = EaseInOut))
-            breath.animateTo(1.1f, infiniteRepeatable(tween(1600, easing = EaseInOut), RepeatMode.Reverse))
+            breath.animateTo(
+                1.1f,
+                infiniteRepeatable(tween(1600, easing = EaseInOut), RepeatMode.Reverse)
+            )
         }
 
         // 4. Close after duration
-        delay(durationMillis)
+        delay(durationMillis.milliseconds)
         close()
     }
 
@@ -159,7 +163,7 @@ private fun OrbRipples(
         // Fake glow with wide, faint strokes instead of a full-screen blur pass per frame.
         for (i in (t / interval).toInt() downTo 0) {
             val p = (t - i * interval) / lifetime
-            if (p < 0f || p >= 1f) continue
+            if (p !in 0f..<1f) continue
             val eased = 1 - (1 - p).pow(3) // ease-out cubic: fast at the orb, slows far away
             val fadeIn = min(p / 0.08f, 1f) // emerge from the orb edge instead of popping
             val ring = Ring(
@@ -175,5 +179,8 @@ private fun OrbRipples(
     }
 }
 
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawRing(ring: Ring, color: Color, width: Float) =
-    drawCircle(color, radius = ring.radius, style = Stroke(width), blendMode = BlendMode.Plus)
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawRing(
+    ring: Ring,
+    color: Color,
+    width: Float
+) = drawCircle(color, radius = ring.radius, style = Stroke(width), blendMode = BlendMode.Plus)

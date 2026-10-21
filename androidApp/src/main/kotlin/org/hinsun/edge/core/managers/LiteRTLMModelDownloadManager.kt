@@ -73,6 +73,7 @@ object LiteRTLMModelDownloadManager {
                 reattach()
                 pump()
             }
+
             fetchSize()
         }
     }
@@ -93,6 +94,7 @@ object LiteRTLMModelDownloadManager {
                 val latest = dao.model(row.id) ?: return@transition
                 save(latest.withPartProgress().copy(downloadStatus = LiteRTLMDownloadStatus.PAUSED))
             }
+
             else -> Unit
         }
     }
@@ -137,13 +139,20 @@ object LiteRTLMModelDownloadManager {
         dao.upsert(
             LiteRTLMEntity.availableModels.map { model ->
                 // Catalog copy lives in code; refresh it so edits reach rows seeded earlier.
-                existing[model.downloadURL]?.copy(name = model.name, summary = model.summary) ?: model
+                existing[model.downloadURL]?.copy(name = model.name, summary = model.summary)
+                    ?: model
             }
         )
 
         for (row in dao.models()) {
             if (row.downloadStatus == LiteRTLMDownloadStatus.COMPLETED && !fileFor(row).exists()) {
-                save(row.copy(downloadStatus = LiteRTLMDownloadStatus.IDLE, downloadProgress = 0.0, downloadedBytes = 0))
+                save(
+                    row.copy(
+                        downloadStatus = LiteRTLMDownloadStatus.IDLE,
+                        downloadProgress = 0.0,
+                        downloadedBytes = 0
+                    )
+                )
             }
         }
     }
@@ -193,7 +202,10 @@ object LiteRTLMModelDownloadManager {
 
             val destination = fileFor(row)
             if (error != null) {
-                save(row.withPartProgress().copy(downloadStatus = LiteRTLMDownloadStatus.FAILED, errorMessage = error))
+                save(
+                    row.withPartProgress()
+                        .copy(downloadStatus = LiteRTLMDownloadStatus.FAILED, errorMessage = error)
+                )
             } else {
                 destination.delete()
                 if (partFileFor(row).renameTo(destination)) {
@@ -207,7 +219,12 @@ object LiteRTLMModelDownloadManager {
                     )
                     nsLog("Download completed for model ${row.name} at ${destination.path}")
                 } else {
-                    save(row.copy(downloadStatus = LiteRTLMDownloadStatus.FAILED, errorMessage = "Could not move downloaded file"))
+                    save(
+                        row.copy(
+                            downloadStatus = LiteRTLMDownloadStatus.FAILED,
+                            errorMessage = "Could not move downloaded file"
+                        )
+                    )
                 }
             }
             pump()
@@ -239,6 +256,7 @@ object LiteRTLMModelDownloadManager {
                     part.delete()
                     error("HTTP 416")
                 }
+
                 else -> error("HTTP $code")
             }
             val length = connection.contentLengthLong
@@ -307,18 +325,21 @@ object LiteRTLMModelDownloadManager {
             }
         }
 
-    private suspend fun save(model: LiteRTLMEntity) = dao.update(model.copy(updatedAt = System.currentTimeMillis()))
+    private suspend fun save(model: LiteRTLMEntity) =
+        dao.update(model.copy(updatedAt = System.currentTimeMillis()))
 
     private fun LiteRTLMEntity.withPartProgress(): LiteRTLMEntity {
         val bytes = partFileFor(this).length()
         return copy(downloadedBytes = bytes, downloadProgress = progress(bytes, totalBytes))
     }
 
-    private fun progress(written: Long, total: Long) = if (total > 0) written.toDouble() / total else 0.0
+    private fun progress(written: Long, total: Long) =
+        if (total > 0) written.toDouble() / total else 0.0
 
     private fun fileFor(model: LiteRTLMEntity) = File(modelsDirectory, model.modelPath)
 
-    private fun partFileFor(model: LiteRTLMEntity) = File(modelsDirectory, "${model.modelPath}.part")
+    private fun partFileFor(model: LiteRTLMEntity) =
+        File(modelsDirectory, "${model.modelPath}.part")
 
     // endregion
 
