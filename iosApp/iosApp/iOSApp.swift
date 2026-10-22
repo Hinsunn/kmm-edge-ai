@@ -25,6 +25,7 @@ struct iOSApp: App {
     @State private var globalEventDriven: GlobalEventDriven
 
     init() {
+        KoinInitKt.initializeKoinDI(configuration: nil)
         LLMProvider.shared.engine = SwiftLLMEngine()
         _mlEngine = State(initialValue: LiteRTLMEngine())
         _globalEventDriven = State(initialValue: GlobalEventDriven(modelContext: AppDatabase.container.mainContext))

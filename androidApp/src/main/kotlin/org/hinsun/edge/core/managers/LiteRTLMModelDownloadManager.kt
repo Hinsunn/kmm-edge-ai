@@ -35,23 +35,12 @@ import java.io.FileOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
 
-/**
- * Android port of iosApp `LiteRTLMModelDownloadManager`.
- *
- * The Room row is the source of truth (SwiftData on iOS). Bytes land in `<modelPath>.part` and are
- * resumed with an HTTP `Range` request, which plays the role of iOS resume data: pausing, failing or
- * killing the app keeps the part file, and the next start continues from its length.
- */
 object LiteRTLMModelDownloadManager {
-
-    /** The maximum number of concurrent downloads allowed, same as iOS. */
     private const val MAX_CONCURRENT_DOWNLOADS = 5
     private const val PROGRESS_SAVE_INTERVAL_MS = 500L
     private const val TIMEOUT_MS = 30_000
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-
-    /** Serializes status transitions; [jobs] is only touched while holding it. */
     private val mutex = Mutex()
     private val jobs = mutableMapOf<String, Job>()
 
@@ -59,8 +48,6 @@ object LiteRTLMModelDownloadManager {
     private lateinit var modelsDirectory: File
 
     val models: Flow<List<LiteRTLMEntity>> get() = dao.observeModels()
-
-    /** Call once on app start so downloads interrupted by a kill resume without opening the Download tab. */
     fun init(context: Context) {
         if (::dao.isInitialized) return
         dao = KMMEdgeAIDatabase.get(context).dao()
@@ -157,7 +144,6 @@ object LiteRTLMModelDownloadManager {
         }
     }
 
-    /** No transfer survives a process death, so whatever was downloading goes back to the queue. */
     private suspend fun reattach() {
         for (row in dao.models()) {
             if (row.downloadStatus == LiteRTLMDownloadStatus.DOWNLOADING) {
@@ -231,7 +217,6 @@ object LiteRTLMModelDownloadManager {
         }
     }
 
-    /** Appends to the part file from its current length. Returns normally once the file is complete. */
     private suspend fun downloadPart(model: LiteRTLMEntity) = coroutineScope {
         val part = partFileFor(model)
         val offset = part.length()

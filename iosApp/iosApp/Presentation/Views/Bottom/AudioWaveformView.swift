@@ -8,6 +8,8 @@ import Foundation
 import SwiftUI
 
 struct AudioWaveformView: View {
+    @Environment(\.scenePhase) private var scenePhase
+
     private var monitor = AudioWaveformMonitor.shared
 
     var body: some View {
@@ -40,14 +42,24 @@ struct AudioWaveformView: View {
         .padding(.bottom, 20)
         .navigationTitle("Live Audio Waveform")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {}
+        .onDisappear {}
+        .onChange(of: scenePhase) { oldPhase, newPhase in
+            switch newPhase {
+            case .active:
+                break
+            case .inactive:
+                break
+            case .background:
+                break
+            @unknown default:
+                break
+            }
+        }
     }
 }
 
-/// Bar chart that eases each bar toward its latest level every display frame.
-/// The mic only delivers ~10 FFT updates per second, so animating per frame in a
-/// Canvas (instead of re-laying out a Chart on each update) keeps the motion smooth.
 private struct WaveformBars: View {
-    /// Target heights, 0...1.
     var levels: [Float]
     var gradient = Gradient(colors: [.pink, .purple, .blue])
 

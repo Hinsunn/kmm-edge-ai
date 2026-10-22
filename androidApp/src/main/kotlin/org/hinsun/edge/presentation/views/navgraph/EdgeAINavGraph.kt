@@ -12,14 +12,9 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import org.hinsun.edge.App
-import org.hinsun.edge.NavRoute
 import org.hinsun.edge.presentation.views.bottom.BottomView
 import org.hinsun.edge.presentation.views.message.MessageView
-import org.hinsun.edge.screens.llm_engines.LLMEnginesView
-import org.hinsun.edge.screens.messages.MessagesView
-import org.hinsun.edge.screens.sessions.SessionsView
-import org.hinsun.edge.screens.speech_engines.SpeechEnginesView
-import org.hinsun.edge.ui.NotFoundView
+import org.hinsun.edge.presentation.ui.NotFoundView
 
 @Composable
 fun EdgeAINavGraph(

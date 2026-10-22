@@ -5,7 +5,6 @@ import androidx.savedstate.serialization.SavedStateConfiguration
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
-import org.hinsun.edge.NavRoute
 
 @Serializable
 sealed interface EdgeAINavRoute : NavKey {

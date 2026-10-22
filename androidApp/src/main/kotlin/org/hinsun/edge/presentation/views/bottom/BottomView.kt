@@ -28,6 +28,7 @@ import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
+import org.hinsun.edge.App
 import org.hinsun.edge.presentation.ui.FloatingAssistant
 import org.hinsun.edge.presentation.ui.OrbOverlay
 import org.hinsun.edge.presentation.ui.preloadEnergyOrbV4
@@ -38,7 +39,7 @@ import org.hinsun.edge.presentation.views.navgraph.EdgeAINavRoute
 import org.hinsun.edge.presentation.views.navgraph.edgeAiConfig
 import org.hinsun.edge.presentation.views.session.SessionView
 import org.hinsun.edge.presentation.views.waveform.AudioWaveformView
-import org.hinsun.edge.ui.NotFoundView
+import org.hinsun.edge.presentation.ui.NotFoundView
 
 private val configuration = SavedStateConfiguration {
     serializersModule = SerializersModule {
@@ -47,6 +48,7 @@ private val configuration = SavedStateConfiguration {
             subclass(BottomNavRoute.Waveform::class, BottomNavRoute.Waveform.serializer())
             subclass(BottomNavRoute.Download::class, BottomNavRoute.Download.serializer())
             subclass(BottomNavRoute.ML::class, BottomNavRoute.ML.serializer())
+            subclass(BottomNavRoute.KMMApp::class, BottomNavRoute.KMMApp.serializer())
         }
     }
 }
@@ -99,6 +101,7 @@ fun BottomView() {
                         is BottomNavRoute.Waveform -> NavEntry(key) { AudioWaveformView() }
                         is BottomNavRoute.Download -> NavEntry(key) { DownloadView() }
                         is BottomNavRoute.ML -> NavEntry(key) { MLView() }
+                        is BottomNavRoute.KMMApp -> NavEntry(key) { App() }
                         else -> NavEntry(key) { NotFoundView() }
                     }
                 }

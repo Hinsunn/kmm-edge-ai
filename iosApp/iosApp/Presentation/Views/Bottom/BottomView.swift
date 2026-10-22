@@ -8,16 +8,6 @@ import Foundation
 import Shared
 import SwiftUI
 
-struct ComposeView: UIViewControllerRepresentable {
-    func makeUIViewController(context: Self.Context) -> UIViewController {
-        MainViewControllerKt.MainViewController()
-    }
-
-    func updateUIViewController(_ uiViewController: UIViewController, context: Self.Context) {
-
-    }
-}
-
 struct BottomView: View {
     @State private var showOrb: Bool = false
     @Environment(NavigationManager.self) private var navigationManager

@@ -1,19 +1,20 @@
 package org.hinsun.edge
 
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation3.runtime.rememberNavBackStack
+import org.hinsun.edge.presentation.views.navgraph.NavGraph
+import org.hinsun.edge.presentation.views.navgraph.NavRoute
+import org.hinsun.edge.presentation.views.navgraph.config
 import org.hinsun.edge.theme.KMMEdgeAITheme
+import org.koin.compose.KoinApplication
+import org.koin.plugin.module.dsl.koinConfiguration
 
 @Composable
-@Preview
 fun App() {
     val navBackStack = rememberNavBackStack(
         configuration = config,
-        NavRoute.Messages,
+        NavRoute.Swipe,
     )
 
     KMMEdgeAITheme {
