@@ -1,6 +1,7 @@
 package org.hinsun.edge.di
 
 import androidx.room3.RoomDatabase
+import org.hinsun.edge.core.platforms.PlatformPath
 import org.hinsun.edge.database.EdgeAIDatabase
 import org.hinsun.edge.database.databaseBuilder
 import org.koin.core.annotation.Configuration
@@ -19,4 +20,7 @@ class IosModule {
     
     @Single
     fun roomBuilder(): RoomDatabase.Builder<EdgeAIDatabase> = databaseBuilder()
+
+    @Single
+    fun platformPath(): PlatformPath = PlatformPath()
 }

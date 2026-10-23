@@ -10,6 +10,15 @@
       }
     },
     {
+      "identity" : "executorch",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pytorch/executorch.git",
+      "state" : {
+        "branch" : "swiftpm-1.5.0",
+        "revision" : "56cc93a96d5fb8d21554ec5f00fbad5a5b228bc4"
+      }
+    },
+    {
       "identity" : "litert-lm",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/google-ai-edge/LiteRT-LM.git",

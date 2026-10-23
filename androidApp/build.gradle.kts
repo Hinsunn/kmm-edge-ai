@@ -52,6 +52,9 @@ dependencies {
     implementation(libs.koin.android)
     implementation(libs.koin.compose)
     implementation(libs.koin.compose.viewmodel)
+
+    // ExecuTorch
+    implementation(libs.executorch.android)
 }
 
 android {

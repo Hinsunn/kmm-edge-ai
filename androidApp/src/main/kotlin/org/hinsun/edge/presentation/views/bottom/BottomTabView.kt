@@ -48,14 +48,8 @@ sealed interface BottomNavRoute : NavKey {
         override val label: String = "MLs"
     }
 
-    @Serializable
-    data object KMMApp : BottomNavRoute, NavKey {
-        override val icon: ImageVector = Icons.Filled.ViewAgenda
-        override val label: String = "KMM App"
-    }
-
     companion object {
-        val routes = listOf(Session, Waveform, Download, ML, KMMApp)
+        val routes = listOf(Session, Waveform, Download, ML)
     }
 }
 

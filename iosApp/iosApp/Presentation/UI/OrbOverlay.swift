@@ -15,8 +15,8 @@ struct OrbOverlay: View {
     @State private var bgOpacity: Double = 0
     @State private var orbScale: CGFloat = 0.3
     @State private var orbOpacity: Double = 0
-    @State private var breath: CGFloat = 1
     @State private var isClosing = false
+    private var monitor = AudioWaveformMonitor.shared
 
     var body: some View {
         ZStack {
@@ -29,13 +29,29 @@ struct OrbOverlay: View {
                 .opacity(orbOpacity)
                 .allowsHitTesting(false)
 
-            EnergyOrbV4()
+            RadialBars(
+                levels: monitor.downsampledMagnitudes.map(barLevel),
+                innerRadius: orbSize * 0.5,
+                maxLength: orbSize * 0.6
+            )
+            .frame(width: orbSize * 3, height: orbSize * 3)
+            .scaleEffect(orbScale)
+            .opacity(orbOpacity)
+            .allowsHitTesting(false)
+
+            EnergyOrbV4V2()
                 .frame(width: orbSize, height: orbSize)
-                .scaleEffect(orbScale * breath)
+                .scaleEffect(orbScale)
                 .opacity(orbOpacity)
         }
         .contentShape(Rectangle())
         .onTapGesture { Task { await close() } }
+        .task {
+            // Separate task: startMonitoring loops over the mic stream until cancelled
+            guard !monitor.isMonitoring else { return }
+            await monitor.startMonitoring()
+        }
+        .onDisappear { monitor.stopMonitoring() }
         .task {
             // 1. Animation Opacity Background
             withAnimation(.easeOut(duration: 0.4)) {
@@ -48,18 +64,8 @@ struct OrbOverlay: View {
                 orbOpacity = 1
             }
 
-            // 3. Breathing: ease 1.0 -> 0.9, then loop 0.9 <-> 1.1
-            try? await Task.sleep(for: .milliseconds(650))
-            withAnimation(.easeInOut(duration: 0.8)) {
-                breath = 0.9
-            } completion: {
-                withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true)) {
-                    breath = 1.1
-                }
-            }
-
-            // 4. Close after duration
-            try? await Task.sleep(for: .seconds(duration - 0.65))
+            // 3. Close after duration
+            try? await Task.sleep(for: .seconds(duration))
             await close()
         }
     }
@@ -76,6 +82,49 @@ struct OrbOverlay: View {
         }
         try? await Task.sleep(for: .milliseconds(350))
         onFinish()
+    }
+}
+
+private let barNoiseFloor: Float = 1.5
+private let barGain: Float = 3
+
+private func barLevel(_ magnitude: Float) -> Float {
+    let x = max(magnitude - barNoiseFloor, 0) / magnitudeLimit * barGain
+    return min(x, 1).squareRoot()
+}
+
+private struct RadialBars: View {
+    var levels: [Float]
+    var innerRadius: CGFloat
+    var maxLength: CGFloat
+    var tint: Color = .init(red: 0.80, green: 0.82, blue: 0.86) // silver
+
+    @State private var state = BarState()
+
+    var body: some View {
+        TimelineView(.animation) { timeline in
+            // Mirror the spectrum so the ring closes without a seam between high and low bins
+            let heights = state.step(toward: levels + levels.reversed(), at: timeline.date)
+            Canvas { ctx, size in
+                guard !heights.isEmpty else { return }
+                let c = CGPoint(x: size.width / 2, y: size.height / 2)
+                let step = 2 * .pi / CGFloat(heights.count)
+                let barWidth = max(2, innerRadius * step * 0.45)
+
+                var path = Path()
+                for (i, h) in heights.enumerated() {
+                    let angle = CGFloat(i) * step - .pi / 2
+                    let length = 4 + CGFloat(h) * maxLength // 5pt resting height when silent
+                    // Bar laid out along +x from the orb edge, then rotated into place around the center
+                    let bar = CGRect(x: innerRadius, y: -barWidth / 2, width: length, height: barWidth)
+                    let transform = CGAffineTransform(rotationAngle: angle)
+                        .concatenating(CGAffineTransform(translationX: c.x, y: c.y))
+                    path.addPath(Path(roundedRect: bar, cornerRadius: 0.5), transform: transform)
+                }
+
+                ctx.fill(path, with: .color(tint))
+            }
+        }
     }
 }
 

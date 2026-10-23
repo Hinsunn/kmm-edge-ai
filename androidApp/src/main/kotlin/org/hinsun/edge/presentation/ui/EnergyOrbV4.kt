@@ -31,16 +31,8 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 import com.lottiefiles.dotlottie.core.jni.DotLottiePlayer as DotLottieJni
+import androidx.core.graphics.createBitmap
 
-/**
- * Orb v4: plays `assets/energy_orb.lottie` (same file as iosApp, white smoke on transparent) on a loop.
- * Its image assets must stay marked embedded (`"e": 1`), see the note in iosApp `EnergyOrbV4.swift`.
- *
- * The library's `DotLottieAnimation` composable parses the file (5.9MB: JSON + 90 image frames) on the
- * main thread every time it enters composition, which froze the overlay for ~1s on each open. Like
- * iOS, one player is loaded off the main thread via [preloadEnergyOrbV4] and reused; frames are
- * software-rendered into a shared bitmap on each display frame.
- */
 @Composable
 fun EnergyOrbV4(modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -61,8 +53,13 @@ fun EnergyOrbV4(modifier: Modifier = Modifier) {
     }
 
     Canvas(modifier.aspectRatio(1f)) {
-        frame // Redraw on every rendered frame without recomposing.
-        orb?.let { drawImage(it.image, dstSize = IntSize(size.width.roundToInt(), size.height.roundToInt())) }
+        frame
+        orb?.let {
+            drawImage(
+                it.image,
+                dstSize = IntSize(size.width.roundToInt(), size.height.roundToInt())
+            )
+        }
     }
 }
 
@@ -87,7 +84,7 @@ private suspend fun loadEnergyOrbV4(context: Context): LoadedOrb = loadLock.with
         val bytes = context.assets.open("energy_orb.lottie").use { it.readBytes() }
         val player = DotLottiePlayer(Config(autoplay = true, loopAnimation = true))
         // The player renders straight into the bitmap's pixels, which stay locked for the app's lifetime.
-        val bitmap = Bitmap.createBitmap(px, px, Bitmap.Config.ARGB_8888)
+        val bitmap = createBitmap(px, px)
         player.setSwTarget(DotLottieJni.nativeLockBitmapPixels(bitmap), px.toUInt(), px.toUInt())
         check(player.loadDotlottieData(bytes)) { "Failed to load energy_orb.lottie" }
         // Warm the first frame too, so the first open draws immediately.

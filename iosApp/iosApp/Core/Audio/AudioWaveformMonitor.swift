@@ -44,51 +44,57 @@ final class AudioWaveformMonitor {
 
         // The input node has no valid format (0 Hz / 0 channels) until a recording
         // session is active, and installTap throws an ObjC exception on that format.
-        // Configured off the main thread: these calls block and Apple warns about UI stalls.
+        // Session, input node and engine start all block for a few hundred ms, so they run
+        // off the main thread; otherwise the UI that triggers monitoring stalls.
+        let engine = audioEngine
+        let tapSize = bufferSize
+        let (audioStream, continuation) = AsyncStream.makeStream(of: [Float].self)
+        let started: Bool
         do {
-            try await Task.detached(priority: .userInitiated) {
+            started = try await Task.detached(priority: .userInitiated) {
                 let session = AVAudioSession.sharedInstance()
                 try session.setCategory(.playAndRecord, mode: .measurement, options: [.defaultToSpeaker, .mixWithOthers])
                 try session.setActive(true)
+
+                let inputNode = engine.inputNode
+                let inputFormat = inputNode.outputFormat(forBus: 0)
+                guard inputFormat.sampleRate > 0, inputFormat.channelCount > 0 else {
+                    // e.g. Simulator with no microphone available to the Mac.
+                    print("No audio input available (format: \(inputFormat))")
+                    return false
+                }
+
+                // Listen to microphone input
+                inputNode.installTap(onBus: 0, bufferSize: UInt32(tapSize), format: inputFormat) { @Sendable buffer, _ in
+                    // 1. Access the first audio channel
+                    let channelData = buffer.floatChannelData?[0]
+                    let frameCount = Int(buffer.frameLength)
+
+                    // 2. Convert it into a Float array
+                    let floatData = Array(UnsafeBufferPointer(start: channelData, count: frameCount))
+
+                    // 3. Yield into the stream
+                    continuation.yield(floatData)
+                }
+
+                try engine.start()
+                return true
             }.value
         } catch {
-            print("Error configuring audio session: \(error.localizedDescription)")
+            print("Error starting audio: \(error.localizedDescription)")
+            engine.inputNode.removeTap(onBus: 0)
+            return
+        }
+        guard started else { return }
+
+        // Caller went away (e.g. overlay closed) while the engine was starting: don't leave the mic on
+        guard !Task.isCancelled else {
+            stopMonitoring()
             return
         }
 
-        let inputNode = audioEngine.inputNode
-        let inputFormat = inputNode.outputFormat(forBus: 0)
-        guard inputFormat.sampleRate > 0, inputFormat.channelCount > 0 else {
-            // e.g. Simulator with no microphone available to the Mac.
-            print("No audio input available (format: \(inputFormat))")
-            return
-        }
         fftSetup = vDSP_DFT_zop_CreateSetup(nil, UInt(bufferSize), .FORWARD)
-
-        // Listen to microphone input
-        let audioStream = AsyncStream<[Float]> { continuation in
-            inputNode.installTap(onBus: 0, bufferSize: UInt32(bufferSize), format: inputFormat) { @Sendable buffer, _ in
-                // 1. Access the first audio channel
-                let channelData = buffer.floatChannelData?[0]
-                let frameCount = Int(buffer.frameLength)
-
-                // 2. Convert it into a Float array
-                let floatData = Array(UnsafeBufferPointer(start: channelData, count: frameCount))
-
-                // 3. Yield into the stream
-                continuation.yield(floatData)
-            }
-        }
-
-        do {
-            // 1. Start the audioEngine
-            try audioEngine.start()
-            // 2. Update the property to monitor the state of the audioEngine
-            isMonitoring = true
-        } catch {
-            print("Error starting audio engine: \(error.localizedDescription)")
-            return
-        }
+        isMonitoring = true
 
         // 3. Retrieving the data from the audioStream
         for await buffers in audioStream {

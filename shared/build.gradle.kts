@@ -13,7 +13,7 @@ plugins {
 }
 
 kotlin {
-    compilerOptions { freeCompilerArgs.add("-Xexpect-actual-classes") }
+    // compilerOptions { freeCompilerArgs.add("-Xexpect-actual-classes") }
 
     listOf(
         iosArm64(),
@@ -57,6 +57,18 @@ kotlin {
             products = listOf(product("DotLottie"))
         )
 
+        swiftPackage(
+            url = url("https://github.com/pytorch/executorch.git"),
+            // Release tags reference local cmake-out builds; prebuilt binaries live on swiftpm-* branches
+            version = branch("swiftpm-1.5.0"),
+            products = listOf(
+                product("executorch"),
+                product("backend_xnnpack"),
+                product("backend_coreml"),
+                product("backend_mlx"),
+            )
+        )
+
     }
 
     sourceSets {
@@ -68,6 +80,9 @@ kotlin {
             implementation(libs.litert)
             implementation(libs.litert.gpu)
             implementation(libs.litert.android)
+
+            // ExecuTorch
+            implementation(libs.executorch.android)
 
             // Lottie Android
             implementation(libs.lottie.android)
@@ -87,6 +102,10 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+
+            // Modules
+            implementation(project(":edge-ai-core"))
+            implementation(project(":native-cpp"))
 
             // Nav3
             implementation(libs.jetbrains.navigation3.ui)

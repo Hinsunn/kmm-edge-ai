@@ -2,6 +2,7 @@ package org.hinsun.edge.di
 
 import android.content.Context
 import androidx.room3.RoomDatabase
+import org.hinsun.edge.core.platforms.PlatformPath
 import org.hinsun.edge.database.EdgeAIDatabase
 import org.hinsun.edge.database.databaseBuilder
 import org.koin.core.annotation.Configuration
@@ -20,4 +21,7 @@ class AndroidModule {
     // Context is provided by androidContext(...) at startKoin
     @Single
     fun roomBuilder(context: Context): RoomDatabase.Builder<EdgeAIDatabase> = databaseBuilder(context)
+
+    @Single
+    fun platformPath(context: Context): PlatformPath = PlatformPath(context)
 }

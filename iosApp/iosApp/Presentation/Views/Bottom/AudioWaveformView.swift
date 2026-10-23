@@ -9,7 +9,6 @@ import SwiftUI
 
 struct AudioWaveformView: View {
     @Environment(\.scenePhase) private var scenePhase
-
     private var monitor = AudioWaveformMonitor.shared
 
     var body: some View {
@@ -44,7 +43,7 @@ struct AudioWaveformView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {}
         .onDisappear {}
-        .onChange(of: scenePhase) { oldPhase, newPhase in
+        .onChange(of: scenePhase) { _, newPhase in
             switch newPhase {
             case .active:
                 break
@@ -93,7 +92,7 @@ private struct WaveformBars: View {
 }
 
 /// Per-frame smoothing state; a class so updating it while drawing doesn't re-render.
-private final class BarState {
+final class BarState {
     private var heights: [Float] = []
     private var last: Date?
 

@@ -31,7 +31,7 @@ import kotlinx.serialization.modules.polymorphic
 import org.hinsun.edge.App
 import org.hinsun.edge.presentation.ui.FloatingAssistant
 import org.hinsun.edge.presentation.ui.OrbOverlay
-import org.hinsun.edge.presentation.ui.preloadEnergyOrbV4
+import org.hinsun.edge.presentation.ui.preloadEnergyOrbV4V2
 import org.hinsun.edge.presentation.views.download.DownloadView
 import org.hinsun.edge.presentation.views.ml.MLView
 import org.hinsun.edge.presentation.views.navgraph.EdgeAINavGraph
@@ -48,7 +48,6 @@ private val configuration = SavedStateConfiguration {
             subclass(BottomNavRoute.Waveform::class, BottomNavRoute.Waveform.serializer())
             subclass(BottomNavRoute.Download::class, BottomNavRoute.Download.serializer())
             subclass(BottomNavRoute.ML::class, BottomNavRoute.ML.serializer())
-            subclass(BottomNavRoute.KMMApp::class, BottomNavRoute.KMMApp.serializer())
         }
     }
 }
@@ -63,7 +62,7 @@ fun BottomView() {
     var showOrb by remember { mutableStateOf(false) }
     val context = LocalContext.current
     // Parse the orb animation in the background so tapping the mascot opens it instantly.
-    LaunchedEffect(Unit) { preloadEnergyOrbV4(context) }
+    LaunchedEffect(Unit) { preloadEnergyOrbV4V2(context) }
 
     Box(Modifier.fillMaxSize()) {
         Scaffold(
@@ -101,7 +100,6 @@ fun BottomView() {
                         is BottomNavRoute.Waveform -> NavEntry(key) { AudioWaveformView() }
                         is BottomNavRoute.Download -> NavEntry(key) { DownloadView() }
                         is BottomNavRoute.ML -> NavEntry(key) { MLView() }
-                        is BottomNavRoute.KMMApp -> NavEntry(key) { App() }
                         else -> NavEntry(key) { NotFoundView() }
                     }
                 }

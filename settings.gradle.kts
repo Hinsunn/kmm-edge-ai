@@ -37,3 +37,5 @@ dependencyResolutionManagement {
 
 include(":androidApp")
 include(":shared")
+include(":native-cpp")
+include(":edge-ai-core")

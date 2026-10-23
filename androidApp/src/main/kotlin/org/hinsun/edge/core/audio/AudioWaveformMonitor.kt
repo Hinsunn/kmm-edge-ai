@@ -56,37 +56,14 @@ object AudioWaveformMonitor {
     /** Caller must hold RECORD_AUDIO; without it AudioRecord fails to initialize and this is a no-op. */
     fun startMonitoring() {
         if (job != null) return
-
-        val minBufferSize = AudioRecord.getMinBufferSize(
-            SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_FLOAT
-        )
-        if (minBufferSize <= 0) {
-            Log.w("AudioWaveformMonitor", "No audio input available ($minBufferSize)")
-            return
-        }
-
-        val record = try {
-            AudioRecord(
-                MediaRecorder.AudioSource.MIC,
-                SAMPLE_RATE,
-                AudioFormat.CHANNEL_IN_MONO,
-                AudioFormat.ENCODING_PCM_FLOAT,
-                // Bytes: room for a few buffers so reads never drop samples.
-                max(minBufferSize, BUFFER_SIZE * Float.SIZE_BYTES * 2)
-            )
-        } catch (e: SecurityException) {
-            Log.w("AudioWaveformMonitor", "Microphone access denied")
-            return
-        }
-        if (record.state != AudioRecord.STATE_INITIALIZED) {
-            Log.w("AudioWaveformMonitor", "AudioRecord failed to initialize")
-            record.release()
-            return
-        }
-
-        record.startRecording()
         _isMonitoring.value = true
+        // AudioRecord setup and startRecording block for a noticeable time; keep them off the caller (UI) thread.
         job = scope.launch {
+            val record = createRecord() ?: run {
+                _isMonitoring.value = false
+                return@launch
+            }
+            record.startRecording()
             val buffer = FloatArray(BUFFER_SIZE)
             try {
                 while (isActive) {
@@ -101,6 +78,36 @@ object AudioWaveformMonitor {
                 _fftMagnitudes.value = FloatArray(SAMPLE_AMOUNT)
             }
         }
+    }
+
+    private fun createRecord(): AudioRecord? {
+        val minBufferSize = AudioRecord.getMinBufferSize(
+            SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_FLOAT
+        )
+        if (minBufferSize <= 0) {
+            Log.w("AudioWaveformMonitor", "No audio input available ($minBufferSize)")
+            return null
+        }
+
+        val record = try {
+            AudioRecord(
+                MediaRecorder.AudioSource.MIC,
+                SAMPLE_RATE,
+                AudioFormat.CHANNEL_IN_MONO,
+                AudioFormat.ENCODING_PCM_FLOAT,
+                // Bytes: room for a few buffers so reads never drop samples.
+                max(minBufferSize, BUFFER_SIZE * Float.SIZE_BYTES * 2)
+            )
+        } catch (e: SecurityException) {
+            Log.w("AudioWaveformMonitor", "Microphone access denied")
+            return null
+        }
+        if (record.state != AudioRecord.STATE_INITIALIZED) {
+            Log.w("AudioWaveformMonitor", "AudioRecord failed to initialize")
+            record.release()
+            return null
+        }
+        return record
     }
 
     fun stopMonitoring() {

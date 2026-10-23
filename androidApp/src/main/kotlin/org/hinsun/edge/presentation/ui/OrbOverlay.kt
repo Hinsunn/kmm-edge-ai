@@ -6,13 +6,14 @@
 
 package org.hinsun.edge.presentation.ui
 
+import android.Manifest
+import android.content.pm.PackageManager
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.EaseIn
-import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.EaseOut
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -21,6 +22,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
@@ -32,41 +34,45 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.hinsun.edge.core.audio.AudioWaveformMonitor
+import org.hinsun.edge.presentation.views.waveform.BarState
 import kotlin.math.PI
 import kotlin.math.hypot
 import kotlin.math.min
 import kotlin.math.pow
+import kotlin.math.sqrt
 import kotlin.time.Duration.Companion.milliseconds
 
-/** SwiftUI `.spring(response:dampingFraction:)` expressed as a Compose spring. */
 internal fun <T> swiftSpring(response: Float, damping: Float) =
     spring<T>(dampingRatio = damping, stiffness = (2 * PI.toFloat() / response).pow(2))
 
-/**
- * Port of iosApp `OrbOverlay`: dims the screen, pops the orb in with ripples, breathes, and closes on
- * tap, back, or after [durationMillis]. [orb] picks the orb version (v1 shader or v4 dotLottie).
- */
 @Composable
 fun OrbOverlay(
     durationMillis: Long = 10_000,
-    orbSize: Dp = 120.dp,
-    orb: @Composable (Modifier) -> Unit = { EnergyOrbV4(it) },
+    orbSize: Dp = 160.dp,
+    orb: @Composable (Modifier) -> Unit = { EnergyOrbV4V2(it) },
     onFinish: () -> Unit,
 ) {
     val bgOpacity = remember { Animatable(0f) }
     val orbScale = remember { Animatable(0.3f) }
     val orbOpacity = remember { Animatable(0f) }
-    val breath = remember { Animatable(1f) }
     var isClosing by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
@@ -83,6 +89,26 @@ fun OrbOverlay(
 
     BackHandler { scope.launch { close() } }
 
+    val context = LocalContext.current
+    val magnitudes by AudioWaveformMonitor.fftMagnitudes.collectAsStateWithLifecycle()
+    val permissionLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) AudioWaveformMonitor.startMonitoring()
+        }
+    DisposableEffect(Unit) {
+        // startMonitoring returns immediately (setup runs in the background), so the overlay shows without delay
+        if (ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.RECORD_AUDIO
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            AudioWaveformMonitor.startMonitoring()
+        } else {
+            permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        }
+        onDispose { AudioWaveformMonitor.stopMonitoring() }
+    }
+
     LaunchedEffect(Unit) {
         // 1. Animation Opacity Background
         launch { bgOpacity.animateTo(0.85f, tween(400, easing = EaseOut)) }
@@ -94,17 +120,7 @@ fun OrbOverlay(
             orbOpacity.animateTo(1f, swiftSpring(0.5f, 0.75f))
         }
 
-        // 3. Breathing: ease 1.0 -> 0.9, then loop 0.9 <-> 1.1
-        launch {
-            delay(650.milliseconds)
-            breath.animateTo(0.9f, tween(800, easing = EaseInOut))
-            breath.animateTo(
-                1.1f,
-                infiniteRepeatable(tween(1600, easing = EaseInOut), RepeatMode.Reverse)
-            )
-        }
-
-        // 4. Close after duration
+        // 3. Close after duration
         delay(durationMillis.milliseconds)
         close()
     }
@@ -123,17 +139,83 @@ fun OrbOverlay(
                 .graphicsLayer { alpha = orbOpacity.value.coerceIn(0f, 1f) },
         )
 
+        // Bars grow outward from the orb edge, following the mic spectrum
+        RadialBars(
+            levels = magnitudes
+                .filterIndexed { index, _ -> index % AudioWaveformMonitor.DOWNSAMPLE_FACTOR == 0 }
+                .map(::barLevel),
+            innerRadius = orbSize * 0.55f,
+            maxLength = orbSize * 0.6f,
+            modifier = Modifier
+                .size(orbSize * 3)
+                .graphicsLayer {
+                    scaleX = orbScale.value
+                    scaleY = orbScale.value
+                    alpha = orbOpacity.value.coerceIn(0f, 1f)
+                },
+        )
+
         orb(
             Modifier
                 .size(orbSize)
                 .graphicsLayer {
-                    val scale = orbScale.value * breath.value
+                    val scale = orbScale.value
                     scaleX = scale
                     scaleY = scale
                     // The spring overshoots past 1.
                     alpha = orbOpacity.value.coerceIn(0f, 1f)
                 }
         )
+    }
+}
+
+/**
+ * Mic magnitude -> bar level 0..1. The floor drops room noise; gain + sqrt lift quiet speech
+ * so soft voices still move the bars. Tune both on a real device.
+ */
+private const val BAR_NOISE_FLOOR = 1.5f
+private const val BAR_GAIN = 3f
+
+private fun barLevel(magnitude: Float): Float {
+    val x = (magnitude - BAR_NOISE_FLOOR).coerceAtLeast(0f) / AudioWaveformMonitor.MAGNITUDE_LIMIT * BAR_GAIN
+    return sqrt(x.coerceAtMost(1f))
+}
+
+@Composable
+private fun RadialBars(
+    levels: List<Float>,
+    innerRadius: Dp,
+    maxLength: Dp,
+    modifier: Modifier = Modifier,
+    tint: Color = Color(0.80f, 0.82f, 0.86f), // silver
+) {
+    val state = remember { BarState() }
+    var frameNanos by remember { mutableLongStateOf(0L) }
+    LaunchedEffect(Unit) {
+        while (true) withFrameNanos { frameNanos = it }
+    }
+
+    Canvas(modifier) {
+        // Mirror the spectrum so the ring closes without a seam between high and low bins
+        val heights = state.step(levels + levels.reversed(), frameNanos)
+        if (heights.isEmpty()) return@Canvas
+        val inner = innerRadius.toPx()
+        val maxLen = maxLength.toPx()
+        val step = 360f / heights.size
+        val barWidth = maxOf(2.dp.toPx(), inner * (2 * PI.toFloat() / heights.size) * 0.45f)
+        val corner = CornerRadius(1.dp.toPx())
+
+        heights.forEachIndexed { i, h ->
+            val length = 5.dp.toPx() + h * maxLen
+            rotate(i * step - 90f, pivot = center) {
+                drawRoundRect(
+                    color = tint,
+                    topLeft = Offset(center.x + inner, center.y - barWidth / 2),
+                    size = Size(length, barWidth),
+                    cornerRadius = corner,
+                )
+            }
+        }
     }
 }
 

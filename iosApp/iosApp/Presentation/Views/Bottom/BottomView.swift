@@ -38,10 +38,6 @@ struct BottomView: View {
                 DownloadView()
             }
             .tabItem { Label("Download", systemImage: "arrow.down.square.fill") }
-
-            ComposeView()
-                .ignoresSafeArea()
-                .tabItem { Label("KMM App", systemImage: "app.badge.fill") }
         }
         .overlay {
             if !showOrb && !isMessageView {
@@ -56,7 +52,7 @@ struct BottomView: View {
             }
         }
         // Parse the orb animation in the background so tapping the mascot opens it instantly.
-        .task { await EnergyOrbV4.preload() }
+        .task { await EnergyOrbV4V2.preload() }
         .onEvent(DatabaseGlobalEvent.self) { event in
             switch event {
             case .messageCleanup:

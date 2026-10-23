@@ -177,7 +177,7 @@ private fun WaveformBars(
 }
 
 /** Per-frame smoothing state; a plain class so updating it while drawing doesn't recompose. */
-private class BarState {
+internal class BarState {
     private var heights = FloatArray(0)
     private var last = 0L
 

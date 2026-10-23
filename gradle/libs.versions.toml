@@ -22,9 +22,12 @@ koin-plugin = "1.2.1"
 litert = "2.3.0"
 litert-android = "latest.release"
 
+# ExecuTorch
+executorch = "1.5.1"
+
 # Nav3 Android
 nav3Core = "1.2.0"
-lifecycleViewmodelNav3 = "2.12.0-alpha04"
+lifecycleViewmodelNav3 = "2.12.0-alpha05"
 kotlinxSerializationCore = "1.12.0"
 material3AdaptiveNav3 = "1.4.0-alpha03"
 
@@ -46,6 +49,11 @@ sqlite = "2.7.1"
 
 # Ksp
 ksp = "2.3.7"
+
+# Kotlin Stdlib
+kotlinStdlib = "2.4.21"
+runner = "1.7.0"
+core = "1.7.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -76,6 +84,9 @@ litert = { module = "com.google.ai.edge.litert:litert", version.ref = "litert" }
 litert-gpu = { module = "com.google.ai.edge.litert:litert-gpu", version.ref = "litert" }
 # LiteRT-LM runtime for on-device LLMs & Gemma
 litert-android = { module = "com.google.ai.edge.litertlm:litertlm-android", version.ref = "litert-android" }
+
+# ExecuTorch
+executorch-android = { module = "org.pytorch:executorch-android", version.ref = "executorch" }
 
 # Core Navigation 3 libraries
 androidx-navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "nav3Core" }
@@ -121,6 +132,9 @@ koin-test = { module = "io.insert-koin:koin-test", version.ref = "koin" }
 koin-test-junit4 = { module = "io.insert-koin:koin-test-junit4", version.ref = "koin" }
 koin-annotations = { module = "io.insert-koin:koin-annotations", version.ref = "koin" }
 koin-compose-viewmodel = { module = "io.insert-koin:koin-compose-viewmodel", version.ref = "koin" }
+kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlinStdlib" }
+androidx-runner = { group = "androidx.test", name = "runner", version.ref = "runner" }
+androidx-core = { group = "androidx.test", name = "core", version.ref = "core" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
@@ -139,3 +153,4 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 
 # Koin Compiler
 koin-compiler = { id = "io.insert-koin.compiler.plugin", version.ref = "koin-plugin" }
+android-lint = { id = "com.android.lint", version.ref = "agp" }

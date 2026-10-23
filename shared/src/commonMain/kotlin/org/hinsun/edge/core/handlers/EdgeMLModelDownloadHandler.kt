@@ -1,7 +1,6 @@
 package org.hinsun.edge.core.handlers
 
 import kotlinx.coroutines.CoroutineScope
-import org.koin.core.annotation.Single
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -12,6 +11,7 @@ import kotlinx.coroutines.launch
 import org.hinsun.edge.database.EdgeAIDatabase
 import org.hinsun.edge.database.EdgeAIDatabaseDao
 import org.hinsun.edge.database.entites.EdgeML
+import org.koin.core.annotation.Singleton
 
 //
 // File        : EdgeMLModelDownloadHandler.kt
@@ -19,7 +19,7 @@ import org.hinsun.edge.database.entites.EdgeML
 // Date        : 10/22/26
 //
 
-@Single
+@Singleton
 class EdgeMLModelDownloadHandler(database: EdgeAIDatabase) {
     private val databaseDao: EdgeAIDatabaseDao = database.dao()
     private val scope = CoroutineScope(SupervisorJob())
