@@ -14,9 +14,8 @@ kotlin {
         compileSdk {
             version = release(37)
         }
+
         minSdk = 24
-
-
     }
 
     // For iOS targets, this is also where you should
@@ -76,5 +75,4 @@ kotlin {
             }
         }
     }
-
 }

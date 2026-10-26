@@ -1,3 +1,4 @@
+import com.android.build.api.dsl.CommonExtension
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -59,7 +60,6 @@ kotlin {
 
         swiftPackage(
             url = url("https://github.com/pytorch/executorch.git"),
-            // Release tags reference local cmake-out builds; prebuilt binaries live on swiftpm-* branches
             version = branch("swiftpm-1.5.0"),
             products = listOf(
                 product("executorch"),

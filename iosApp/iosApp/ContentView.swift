@@ -11,6 +11,7 @@ struct ComposeView: UIViewControllerRepresentable {
 
 struct ContentView: View {
     @State private var navigationManager = NavigationManager()
+    @State private var isUseNative = false
 
     var body: some View {
         // BottomView()

@@ -67,7 +67,7 @@ internal fun <T> swiftSpring(response: Float, damping: Float) =
 fun OrbOverlay(
     durationMillis: Long = 10_000,
     orbSize: Dp = 160.dp,
-    orb: @Composable (Modifier) -> Unit = { EnergyOrbV4V2(it) },
+    orb: @Composable (Modifier) -> Unit = { EnergyOrbV4(it) },
     onFinish: () -> Unit,
 ) {
     val bgOpacity = remember { Animatable(0f) }
@@ -143,7 +143,7 @@ fun OrbOverlay(
         RadialBars(
             levels = magnitudes
                 .filterIndexed { index, _ -> index % AudioWaveformMonitor.DOWNSAMPLE_FACTOR == 0 }
-                .map(::barLevel),
+                .map { it / AudioWaveformMonitor.MAGNITUDE_LIMIT },
             innerRadius = orbSize * 0.55f,
             maxLength = orbSize * 0.6f,
             modifier = Modifier
@@ -162,22 +162,18 @@ fun OrbOverlay(
                     val scale = orbScale.value
                     scaleX = scale
                     scaleY = scale
-                    // The spring overshoots past 1.
                     alpha = orbOpacity.value.coerceIn(0f, 1f)
                 }
         )
     }
 }
 
-/**
- * Mic magnitude -> bar level 0..1. The floor drops room noise; gain + sqrt lift quiet speech
- * so soft voices still move the bars. Tune both on a real device.
- */
-private const val BAR_NOISE_FLOOR = 1.5f
-private const val BAR_GAIN = 3f
+private const val BAR_NOISE_FLOOR = 3.0f
+private const val BAR_GAIN = 0.6f
 
 private fun barLevel(magnitude: Float): Float {
-    val x = (magnitude - BAR_NOISE_FLOOR).coerceAtLeast(0f) / AudioWaveformMonitor.MAGNITUDE_LIMIT * BAR_GAIN
+    val x = (magnitude - BAR_NOISE_FLOOR)
+        .coerceAtLeast(0f) / AudioWaveformMonitor.MAGNITUDE_LIMIT * BAR_GAIN
     return sqrt(x.coerceAtMost(1f))
 }
 

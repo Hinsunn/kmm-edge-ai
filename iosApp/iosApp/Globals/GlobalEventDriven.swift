@@ -17,7 +17,6 @@ enum DatabaseGlobalEvent: BusEvent {
     case sessionCleanup
     case messageCleanup
 
-    /// The number of times the event should be replayed to new subscribers.
     static var replay: Int {
         64
     }

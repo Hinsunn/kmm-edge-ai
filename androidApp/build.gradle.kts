@@ -52,9 +52,6 @@ dependencies {
     implementation(libs.koin.android)
     implementation(libs.koin.compose)
     implementation(libs.koin.compose.viewmodel)
-
-    // ExecuTorch
-    implementation(libs.executorch.android)
 }
 
 android {
@@ -78,6 +75,10 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+
+        jniLibs {
+            pickFirsts += "**/libc++_shared.so"
         }
     }
 
