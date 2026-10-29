@@ -11,13 +11,11 @@ struct ComposeView: UIViewControllerRepresentable {
 
 struct ContentView: View {
     @State private var navigationManager = NavigationManager()
-    @State private var isUseNative = false
 
     var body: some View {
-        // BottomView()
-        //     .environment(navigationManager)
+        BottomView().environment(navigationManager)
 
-        ComposeView()
-            .ignoresSafeArea()
+        // ComposeView()
+        //     .ignoresSafeArea()
     }
 }
